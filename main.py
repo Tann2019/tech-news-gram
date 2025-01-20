@@ -1,29 +1,18 @@
 import requests
 from transformers import pipeline
-from gtts import gTTS
 import subprocess
 import os
 import random
 import json
-from datetime import datetime, timedelta
 from newspaper import Article
 from dotenv import load_dotenv
 import pysrt
 import whisper
-import datetime
 import unicodedata
-
-# Load environment variables from .env file
-load_dotenv()
-
-# Fetch API keys from environment variables
-api_key = os.getenv("NEWSAPI_KEY")
-elevenlabs_api_key = os.getenv("ELEVENLABS_API_KEY")
 
 
 # Fetch Tech News with Full Content
 def fetch_tech_news(api_key):
-    # url = f"https://newsapi.org/v2/top-headlines?category=programming&apiKey={api_key}"
     url = f"https://newsapi.org/v2/everything?q=(programming OR coding OR development) AND (features OR updates OR news) AND (languages OR frameworks) NOT (hiring OR jobs OR careers OR vacancies OR Gold OR economics)&from=2025-01-01&to=2025-01-14&language=en&sortBy=publishedAt&apiKey={api_key}"
     response = requests.get(url)
     if response.status_code != 200:
@@ -45,7 +34,6 @@ def fetch_tech_news(api_key):
         valid_articles.append(article)
     
     # Sort by publishedAt date descending
-    # valid_articles.sort(key=lambda x: x["publishedAt"], reverse=True)
     
     full_articles = []
     for article in valid_articles:
@@ -75,11 +63,8 @@ def fetch_tech_news(api_key):
     
     return full_articles
 
-# Initialize the summarizer once
-summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
-
 # Summarize Article
-def summarize_article(article_text):
+def summarize_article(article_text, summarizer):
     # Limit the input text to prevent excessive memory usage
     max_input_length = 1024  # Adjust based on model's maximum token limit
     if len(article_text) > max_input_length:
@@ -132,7 +117,6 @@ def get_audio_length(filepath):
 def transcribe_with_whisper(audio_file, offset=0.0):
 
     # Transcribe audio file using whisper with shorter, more precise segments
-
     model = whisper.load_model("base")
     
     # Transcribe with word-level timestamps
@@ -364,7 +348,18 @@ def combine_srt_files(srt_paths, final_srt_path):
     combined_subs.save(final_srt_path, encoding='utf-8')
 
 if __name__ == "__main__":
-    tech_articles = fetch_tech_news(api_key)
+    
+    # Load environment variables from .env file
+    load_dotenv()
+
+    # Fetch API keys from environment variables
+    newsapi_api_key = os.getenv("NEWSAPI_KEY")
+    elevenlabs_api_key = os.getenv("ELEVENLABS_API_KEY")
+
+    # Initialize the summarizer once
+    summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+
+    tech_articles = fetch_tech_news(newsapi_api_key)
 
     voiceover_files = []
     image_files = []
@@ -377,7 +372,7 @@ if __name__ == "__main__":
         content = article['content'] or article['description']
         image_url = article.get('urlToImage')
         
-        summary = summarize_article(content)
+        summary = summarize_article(content, summarizer)
 
         # Generate voiceover
         voiceover_file = f"voiceover_{idx}.mp3"
