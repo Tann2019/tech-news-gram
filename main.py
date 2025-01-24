@@ -7,10 +7,15 @@ from dotenv import load_dotenv
 import pysrt
 import unicodedata
 
-import elevenlabs_api_handler
-import news_api_handler
-import news_data_processor
-import audio_data_processor
+from handlers import (
+    news_api_handler as news_api_handler, 
+    elevenlabs_api_handler as elevenlabs_api_handler
+)
+from processors import (
+    news_data_processor as news_proc, 
+    audio_data_processor as audio_proc
+)
+
 
 # Download Main Image
 def download_main_image(image_url, filename="article_image.jpg"):
@@ -26,11 +31,11 @@ def download_main_image(image_url, filename="article_image.jpg"):
         
 # Replace existing generate_subtitles_with_subsai function
 def generate_subtitles_with_subsai(audio_file, offset=0.0):
-    return audio_data_processor.transcribe_with_whisper(audio_file, offset)
+    return audio_proc.transcribe_with_whisper(audio_file, offset)
 
 # Replace existing generate_single_srt function  
 def generate_single_srt(audio_file, output_path, offset=0.0):
-    subs = audio_data_processor.transcribe_with_whisper(audio_file, offset)
+    subs = audio_proc.transcribe_with_whisper(audio_file, offset)
     subs.save(output_path)
     return subs
 
@@ -50,7 +55,7 @@ def escape_text(text):
     return text
 
 def create_video_with_ffmpeg(voiceover_files, srt_file, background_video, image_files, titles, output="final_reel.mp4"):
-    durations = [audio_data_processor.get_audio_length(v) for v in voiceover_files]
+    durations = [audio_proc.get_audio_length(v) for v in voiceover_files]
 
     offsets = []
     current_start = 0.0
@@ -61,7 +66,7 @@ def create_video_with_ffmpeg(voiceover_files, srt_file, background_video, image_
     # Total video length based on combined voiceovers
     total_voice_length = offsets[-1][1] if offsets else 0
 
-    total_bg_length = audio_data_processor.get_audio_length(background_video)
+    total_bg_length = audio_proc.get_audio_length(background_video)
     
     # Validate background video length and calculate random start
     if total_bg_length <= total_voice_length:
@@ -169,7 +174,7 @@ def create_video_with_ffmpeg(voiceover_files, srt_file, background_video, image_
     for voice_file in voiceover_files:
         subs = generate_subtitles_with_subsai(voice_file, current_offset)
         all_subs.extend(subs)
-        current_offset += audio_data_processor.get_audio_length(voice_file)
+        current_offset += audio_proc.get_audio_length(voice_file)
     
     # Save combined subtitles
     srt_path = os.path.abspath(srt_file)
@@ -238,7 +243,7 @@ if __name__ == "__main__":
         content = article['content'] or article['description']
         image_url = article.get('urlToImage')
         
-        summary = news_data_processor.summarize_article(content, summarizer)
+        summary = news_proc.summarize_article(content, summarizer)
 
         # Generate voiceover
         voiceover_file = f"voiceover_{idx}.mp3"
@@ -278,7 +283,7 @@ if __name__ == "__main__":
         srt_path = f"subtitle_{idx}.srt"
         generate_single_srt(voiceover, srt_path, current_offset)
         srt_paths.append(srt_path)
-        current_offset += audio_data_processor.get_audio_length(voiceover)
+        current_offset += audio_proc.get_audio_length(voiceover)
     
     # Combine all SRTs
     combine_srt_files(srt_paths, "final_subtitles.srt")
