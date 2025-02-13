@@ -3,7 +3,9 @@ from newspaper.api import Article
 
 # Fetch Tech News with Full Content
 def fetch_tech_news(api_key):
-    url = f"https://newsapi.org/v2/everything?q=(programming OR coding OR development) AND (features OR updates OR news) AND (languages OR frameworks) NOT (hiring OR jobs OR careers OR vacancies OR Gold OR economics)&from=2025-01-01&to=2025-01-14&language=en&sortBy=publishedAt&apiKey={api_key}"
+    # url = f"https://newsapi.org/v2/everything?q=(programming OR coding OR development) AND (features OR updates OR news) AND (languages OR frameworks) NOT (hiring OR jobs OR careers OR vacancies OR Gold OR economics)&from=2025-01-01&to=2025-01-14&language=en&sortBy=publishedAt&apiKey={api_key}"
+    # url for top technology news
+    url = f"https://newsapi.org/v2/top-headlines?category=technology&language=en&apiKey={api_key}"
     response = requests.get(url)
     if response.status_code != 200:
         print(f"Error fetching news: {response.status_code}")

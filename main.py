@@ -9,7 +9,8 @@ import unicodedata
 
 from handlers import (
     news_api_handler as news_api_handler, 
-    elevenlabs_api_handler as elevenlabs_api_handler
+    elevenlabs_api_handler as elevenlabs_api_handler,
+    tiktok_api_handler as tiktok_api_handler
 )
 from processors import (
     news_data_processor as news_proc, 
@@ -296,5 +297,11 @@ if __name__ == "__main__":
         image_files,
         titles
     )
+
+    access_token = os.getenv("TIKTOK_ACCESS_TOKEN")
+
+    # Post video to TikTok
+    tiktok_api_handler.post_video_to_tiktok(access_token, "final_reel.mp4", "Tech news reel")
+    
 
     print("Tech news reel with subtitles created!")
