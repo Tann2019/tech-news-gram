@@ -1,0 +1,9 @@
+requests
+python-dotenv
+transformers
+torch
+newspaper3k
+pysrt
+whisper
+flask
+elevenlabs
